@@ -2,6 +2,7 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AutoResizeTextarea } from "@/components/ui/auto-resize-textarea";
 import type { TransactionFormState } from "@/lib/actions/transactions";
 import type { Category, Transaction, TransactionType } from "@/lib/types/database";
 
@@ -97,10 +98,9 @@ export function TransactionForm({
         <label htmlFor="description" className="text-sm text-muted">
           Descrição
         </label>
-        <input
+        <AutoResizeTextarea
           id="description"
           name="description"
-          type="text"
           maxLength={200}
           defaultValue={transaction?.description}
           className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"

@@ -2,6 +2,7 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AutoResizeTextarea } from "@/components/ui/auto-resize-textarea";
 import type { RecurringFormState } from "@/lib/actions/recurring";
 import type {
   Category,
@@ -101,10 +102,9 @@ export function RecurringForm({
         <label htmlFor="description" className="text-sm text-muted">
           Descrição
         </label>
-        <input
+        <AutoResizeTextarea
           id="description"
           name="description"
-          type="text"
           maxLength={200}
           defaultValue={recurring?.description}
           placeholder="Ex: Assinatura streaming"
