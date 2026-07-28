@@ -14,6 +14,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { signOut } from "@/lib/actions/auth";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -30,9 +31,13 @@ export function Navbar({ userLabel }: { userLabel: string }) {
   return (
     <header className="border-b border-border bg-surface">
       <nav className="mx-auto flex max-w-7xl items-center gap-6 px-6 py-3">
-        <Link href="/dashboard" className="flex items-center gap-1 text-lg font-bold whitespace-nowrap">
-          <span className="text-primary">LCK</span>
-          <span>Digital Group</span>
+        <Link href="/dashboard" className="flex items-center gap-2 text-lg font-bold whitespace-nowrap">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm text-white">
+            L
+          </span>
+          <span className="hidden sm:inline">
+            <span className="text-primary">LCK</span> Digital Group
+          </span>
         </Link>
 
         <div className="flex flex-1 items-center gap-1">
@@ -62,6 +67,8 @@ export function Navbar({ userLabel }: { userLabel: string }) {
           <Plus size={16} />
           Transação
         </Link>
+
+        <ThemeToggle />
 
         <div className="relative">
           <button

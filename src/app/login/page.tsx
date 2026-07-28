@@ -13,12 +13,17 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <div className="mb-8 flex items-center justify-center gap-2 text-2xl font-bold">
-          <span className="text-primary">LCK</span>
-          <span>Digital Group</span>
+        <div className="mb-8 flex flex-col items-center gap-3">
+          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-xl font-bold text-white shadow-[0_8px_24px_-8px_var(--primary)]">
+            L
+          </span>
+          <div className="flex items-center gap-2 text-2xl font-bold">
+            <span className="text-primary">LCK</span>
+            <span>Digital Group</span>
+          </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-6">
+        <div className="rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.35)] p-6">
           <div className="mb-6 flex rounded-lg bg-background p-1">
             <button
               type="button"

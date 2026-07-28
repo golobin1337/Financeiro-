@@ -37,7 +37,7 @@ export function BudgetCard({
   const barColor = over ? "var(--danger)" : percent >= 80 ? "#eda100" : "var(--primary)";
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-5">
+    <div className="rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.35)] p-5">
       <div className="mb-3 flex items-center gap-2">
         <span
           className="h-2.5 w-2.5 shrink-0 rounded-full"

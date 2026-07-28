@@ -45,7 +45,7 @@ export default async function HistoricoPage({
 
       <form
         method="get"
-        className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-surface p-4"
+        className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.35)] p-4"
       >
         <input
           name="q"
@@ -96,7 +96,7 @@ export default async function HistoricoPage({
         </p>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-surface">
+      <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.35)]">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left text-muted">

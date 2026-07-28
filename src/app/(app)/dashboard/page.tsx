@@ -1,11 +1,21 @@
 import Link from "next/link";
+import {
+  BarChart3,
+  PieChart as PieChartIcon,
+  LineChart as LineChartIcon,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/get-user";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { ExpenseDonutChart, type DonutSlice } from "@/components/dashboard/expense-donut-chart";
 import {
   IncomeExpenseBarChart,
   type MonthlyTotals,
 } from "@/components/dashboard/income-expense-bar-chart";
+import { DailyFlowChart, type DailyTotals } from "@/components/dashboard/daily-flow-chart";
 import { currentCompetencia, formatCurrency, monthShortLabel } from "@/lib/format";
 import type { TransactionWithCategory } from "@/lib/types/database";
 
@@ -37,6 +47,12 @@ export default async function DashboardPage({
   const competencia = params.competencia ?? currentCompetencia();
 
   const supabase = await createClient();
+  const user = await getCurrentUser();
+  const firstName = (
+    (user?.user_metadata?.name as string | undefined) ??
+    user?.email?.split("@")[0] ??
+    ""
+  ).split(" ")[0];
 
   const trendStart = shiftCompetencia(competencia, -(MONTHS_IN_TREND - 1));
   const { start: trendStartDate } = monthRange(trendStart);
@@ -107,6 +123,21 @@ export default async function DashboardPage({
   }
   const barData = [...monthlyTotals.values()];
 
+  const [competenciaYear, competenciaMonth] = competencia.split("-").map(Number);
+  const daysInMonth = new Date(Date.UTC(competenciaYear, competenciaMonth, 0)).getUTCDate();
+  const dailyTotals = new Map<string, DailyTotals>();
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = `${competencia}-${String(day).padStart(2, "0")}`;
+    dailyTotals.set(date, { date, day: String(day).padStart(2, "0"), income: 0, expense: 0 });
+  }
+  for (const t of monthTransactions) {
+    const bucket = dailyTotals.get(t.date);
+    if (!bucket) continue;
+    if (t.type === "income") bucket.income += t.amount;
+    else bucket.expense += t.amount;
+  }
+  const dailyData = [...dailyTotals.values()];
+
   const previousCompetencia = shiftCompetencia(competencia, -1);
   const nextCompetencia = shiftCompetencia(competencia, 1);
 
@@ -114,7 +145,9 @@ export default async function DashboardPage({
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Olá!</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Olá{firstName ? `, ${firstName}` : ""}!
+          </h1>
           <p className="text-muted">Resumo financeiro do mês</p>
         </div>
 
@@ -168,21 +201,45 @@ export default async function DashboardPage({
       )}
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Saldo do mês" value={formatCurrency(saldo)} />
-        <StatCard label="Receitas" value={formatCurrency(totalIncome)} tone="success" />
-        <StatCard label="Despesas" value={formatCurrency(totalExpense)} tone="danger" />
+        <StatCard label="Saldo do mês" value={formatCurrency(saldo)} icon={Wallet} />
+        <StatCard
+          label="Receitas"
+          value={formatCurrency(totalIncome)}
+          tone="success"
+          icon={TrendingUp}
+        />
+        <StatCard
+          label="Despesas"
+          value={formatCurrency(totalExpense)}
+          tone="danger"
+          icon={TrendingDown}
+        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-border bg-surface p-5">
-          <h2 className="mb-4 text-sm font-semibold">Gastos por categoria</h2>
+        <div className="rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.35)] p-5">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+            <PieChartIcon size={16} className="text-primary" />
+            Gastos por categoria
+          </h2>
           <ExpenseDonutChart data={donutData} />
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-5">
-          <h2 className="mb-4 text-sm font-semibold">Receitas vs. despesas</h2>
+        <div className="rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.35)] p-5">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+            <BarChart3 size={16} className="text-primary" />
+            Receitas vs. despesas
+          </h2>
           <IncomeExpenseBarChart data={barData} />
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.35)] p-5">
+        <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+          <LineChartIcon size={16} className="text-primary" />
+          Gasto e faturamento por dia
+        </h2>
+        <DailyFlowChart data={dailyData} />
       </div>
     </div>
   );

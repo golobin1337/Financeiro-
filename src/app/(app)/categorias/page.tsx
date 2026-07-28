@@ -28,7 +28,7 @@ export default async function CategoriasPage() {
       )}
 
       <div className="grid gap-6 md:grid-cols-2">
-        <section className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
+        <section className="flex flex-col gap-3 rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.35)] p-5">
           <h2 className="text-sm font-semibold text-success">Receitas</h2>
           <div className="flex flex-col gap-2">
             {income.map((category) => (
@@ -41,7 +41,7 @@ export default async function CategoriasPage() {
           <NewCategoryForm defaultType="income" />
         </section>
 
-        <section className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5">
+        <section className="flex flex-col gap-3 rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.35)] p-5">
           <h2 className="text-sm font-semibold text-danger">Despesas</h2>
           <div className="flex flex-col gap-2">
             {expense.map((category) => (

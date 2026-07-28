@@ -1,7 +1,9 @@
 "use client";
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { PieChart as PieChartIcon } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
+import { useChartTheme } from "@/lib/use-chart-theme";
 
 export interface DonutSlice {
   id: string;
@@ -28,11 +30,13 @@ function CustomTooltip({
 }
 
 export function ExpenseDonutChart({ data }: { data: DonutSlice[] }) {
+  const chartTheme = useChartTheme();
   const total = data.reduce((sum, d) => sum + d.value, 0);
 
   if (data.length === 0) {
     return (
-      <div className="flex h-64 items-center justify-center text-sm text-muted">
+      <div className="flex h-64 flex-col items-center justify-center gap-2 text-sm text-muted">
+        <PieChartIcon size={28} className="opacity-40" />
         Nenhuma despesa registrada nesta competência.
       </div>
     );
@@ -50,7 +54,7 @@ export function ExpenseDonutChart({ data }: { data: DonutSlice[] }) {
               innerRadius={62}
               outerRadius={90}
               paddingAngle={data.length > 1 ? 2 : 0}
-              stroke="var(--surface)"
+              stroke={chartTheme.surface}
               strokeWidth={2}
             >
               {data.map((slice) => (

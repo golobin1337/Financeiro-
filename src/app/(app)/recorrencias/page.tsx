@@ -46,7 +46,7 @@ export default async function RecorrenciasPage() {
         {recurring.map((r) => (
           <div
             key={r.id}
-            className={`flex items-center gap-4 rounded-2xl border border-border bg-surface p-4 ${
+            className={`flex items-center gap-4 rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.35)] p-4 ${
               r.active ? "" : "opacity-50"
             }`}
           >

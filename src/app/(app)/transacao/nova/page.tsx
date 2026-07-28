@@ -14,7 +14,7 @@ export default async function NovaTransacaoPage() {
         <p className="text-muted">Registre uma receita ou despesa</p>
       </div>
 
-      <div className="rounded-2xl border border-border bg-surface p-6">
+      <div className="rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.35)] p-6">
         <TransactionForm
           action={createTransaction}
           categories={(data ?? []) as Category[]}
