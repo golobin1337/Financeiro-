@@ -1,0 +1,189 @@
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { StatCard } from "@/components/dashboard/stat-card";
+import { ExpenseDonutChart, type DonutSlice } from "@/components/dashboard/expense-donut-chart";
+import {
+  IncomeExpenseBarChart,
+  type MonthlyTotals,
+} from "@/components/dashboard/income-expense-bar-chart";
+import { currentCompetencia, formatCurrency, monthShortLabel } from "@/lib/format";
+import type { TransactionWithCategory } from "@/lib/types/database";
+
+const CATEGORY_FALLBACK_COLOR = "#6b6b8a";
+const MONTHS_IN_TREND = 6;
+
+function monthRange(competencia: string) {
+  const [year, month] = competencia.split("-").map(Number);
+  const start = new Date(Date.UTC(year, month - 1, 1));
+  const end = new Date(Date.UTC(year, month, 1));
+  return {
+    start: start.toISOString().slice(0, 10),
+    end: end.toISOString().slice(0, 10),
+  };
+}
+
+function shiftCompetencia(competencia: string, offset: number) {
+  const [year, month] = competencia.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1 + offset, 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ competencia?: string }>;
+}) {
+  const params = await searchParams;
+  const competencia = params.competencia ?? currentCompetencia();
+
+  const supabase = await createClient();
+
+  const trendStart = shiftCompetencia(competencia, -(MONTHS_IN_TREND - 1));
+  const { start: trendStartDate } = monthRange(trendStart);
+  const { end: trendEndDate } = monthRange(competencia);
+
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("*, category:categories(*)")
+    .gte("date", trendStartDate)
+    .lt("date", trendEndDate)
+    .order("date", { ascending: true });
+
+  const transactions = (data ?? []) as TransactionWithCategory[];
+  const { start: monthStart, end: monthEnd } = monthRange(competencia);
+  const monthTransactions = transactions.filter(
+    (t) => t.date >= monthStart && t.date < monthEnd
+  );
+
+  const totalIncome = monthTransactions
+    .filter((t) => t.type === "income")
+    .reduce((sum, t) => sum + t.amount, 0);
+  const totalExpense = monthTransactions
+    .filter((t) => t.type === "expense")
+    .reduce((sum, t) => sum + t.amount, 0);
+  const saldo = totalIncome - totalExpense;
+
+  const expenseByCategory = new Map<string, DonutSlice>();
+  for (const t of monthTransactions) {
+    if (t.type !== "expense") continue;
+    const key = t.category?.id ?? "sem-categoria";
+    const existing = expenseByCategory.get(key);
+    if (existing) {
+      existing.value += t.amount;
+    } else {
+      expenseByCategory.set(key, {
+        id: key,
+        name: t.category?.name ?? "Sem categoria",
+        color: t.category?.color ?? CATEGORY_FALLBACK_COLOR,
+        value: t.amount,
+      });
+    }
+  }
+  const sortedSlices = [...expenseByCategory.values()].sort((a, b) => b.value - a.value);
+  const donutData =
+    sortedSlices.length > 6
+      ? [
+          ...sortedSlices.slice(0, 5),
+          {
+            id: "outras",
+            name: "Outras",
+            color: CATEGORY_FALLBACK_COLOR,
+            value: sortedSlices.slice(5).reduce((sum, s) => sum + s.value, 0),
+          },
+        ]
+      : sortedSlices;
+
+  const monthlyTotals = new Map<string, MonthlyTotals>();
+  for (let i = 0; i < MONTHS_IN_TREND; i++) {
+    const key = shiftCompetencia(trendStart, i);
+    monthlyTotals.set(key, { month: key, label: monthShortLabel(key), income: 0, expense: 0 });
+  }
+  for (const t of transactions) {
+    const key = t.date.slice(0, 7);
+    const bucket = monthlyTotals.get(key);
+    if (!bucket) continue;
+    if (t.type === "income") bucket.income += t.amount;
+    else bucket.expense += t.amount;
+  }
+  const barData = [...monthlyTotals.values()];
+
+  const previousCompetencia = shiftCompetencia(competencia, -1);
+  const nextCompetencia = shiftCompetencia(competencia, 1);
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Olá!</h1>
+          <p className="text-muted">Resumo financeiro do mês</p>
+        </div>
+
+        <form method="get" className="flex items-end gap-2">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="competencia" className="text-sm text-muted">
+              Competência
+            </label>
+            <input
+              id="competencia"
+              name="competencia"
+              type="month"
+              defaultValue={competencia}
+              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+          </div>
+          <button
+            type="submit"
+            className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-surface-hover"
+          >
+            Carregar
+          </button>
+          <Link
+            href="/transacao/nova"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
+          >
+            + Transação
+          </Link>
+        </form>
+      </div>
+
+      <div className="flex items-center gap-2 text-sm text-muted">
+        <Link
+          href={`/dashboard?competencia=${previousCompetencia}`}
+          className="rounded-md px-2 py-1 hover:bg-surface-hover hover:text-foreground"
+        >
+          ← mês anterior
+        </Link>
+        <Link
+          href={`/dashboard?competencia=${nextCompetencia}`}
+          className="rounded-md px-2 py-1 hover:bg-surface-hover hover:text-foreground"
+        >
+          próximo mês →
+        </Link>
+      </div>
+
+      {error && (
+        <p className="rounded-lg border border-danger/30 bg-danger-bg px-4 py-3 text-sm text-danger">
+          Não foi possível ligar ao servidor. Verifique a ligação ou tente mais tarde.
+        </p>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard label="Saldo do mês" value={formatCurrency(saldo)} />
+        <StatCard label="Receitas" value={formatCurrency(totalIncome)} tone="success" />
+        <StatCard label="Despesas" value={formatCurrency(totalExpense)} tone="danger" />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-surface p-5">
+          <h2 className="mb-4 text-sm font-semibold">Gastos por categoria</h2>
+          <ExpenseDonutChart data={donutData} />
+        </div>
+
+        <div className="rounded-2xl border border-border bg-surface p-5">
+          <h2 className="mb-4 text-sm font-semibold">Receitas vs. despesas</h2>
+          <IncomeExpenseBarChart data={barData} />
+        </div>
+      </div>
+    </div>
+  );
+}
