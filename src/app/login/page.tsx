@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { signIn, signUp, type AuthState } from "@/lib/actions/auth";
 
-const initialState: AuthState = { error: null };
+const initialState: AuthState = { error: null, info: null };
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"entrar" | "cadastro">("entrar");
@@ -90,6 +90,12 @@ export default function LoginPage() {
             {state.error && (
               <p className="rounded-lg border border-danger/30 bg-danger-bg px-3 py-2 text-sm text-danger">
                 {state.error}
+              </p>
+            )}
+
+            {state.info && (
+              <p className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-sm text-primary">
+                {state.info}
               </p>
             )}
 

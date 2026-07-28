@@ -30,7 +30,6 @@ export function CategoryRow({ category }: { category: Category }) {
         className="flex items-center gap-2 rounded-lg border border-border bg-background p-2"
       >
         <input type="hidden" name="id" value={category.id} />
-        <input type="hidden" name="type" value={category.type} />
         <input
           type="color"
           name="color"
@@ -43,6 +42,14 @@ export function CategoryRow({ category }: { category: Category }) {
           required
           className="flex-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm outline-none focus:border-primary"
         />
+        <select
+          name="type"
+          defaultValue={category.type}
+          className="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm outline-none focus:border-primary"
+        >
+          <option value="expense">Despesa</option>
+          <option value="income">Receita</option>
+        </select>
         <button
           type="submit"
           disabled={pending}
