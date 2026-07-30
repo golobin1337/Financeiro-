@@ -132,7 +132,7 @@ export async function materializeDueRecurring() {
   if (!due || due.length === 0) return;
 
   for (const recurring of due) {
-    const newTransactions: { user_id: string; category_id: string | null; amount: number; type: string; description: string; date: string }[] = [];
+    const newTransactions: { user_id: string; category_id: string | null; recurring_id: string; amount: number; type: string; description: string; date: string }[] = [];
     let cursor = recurring.next_date as string;
     let iterations = 0;
 
@@ -140,6 +140,7 @@ export async function materializeDueRecurring() {
       newTransactions.push({
         user_id: user.id,
         category_id: recurring.category_id,
+        recurring_id: recurring.id,
         amount: recurring.amount,
         type: recurring.type,
         description: recurring.description,

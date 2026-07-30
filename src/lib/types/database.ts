@@ -15,6 +15,7 @@ export interface Transaction {
   id: string;
   user_id: string;
   category_id: string | null;
+  recurring_id: string | null;
   amount: number;
   type: TransactionType;
   description: string;

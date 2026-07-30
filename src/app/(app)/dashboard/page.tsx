@@ -16,8 +16,12 @@ import {
   type MonthlyTotals,
 } from "@/components/dashboard/income-expense-bar-chart";
 import { DailyFlowChart, type DailyTotals } from "@/components/dashboard/daily-flow-chart";
+import {
+  RecurringReminders,
+  type RecurringReminder,
+} from "@/components/dashboard/recurring-reminders";
 import { currentCompetencia, formatCurrency, monthShortLabel } from "@/lib/format";
-import type { TransactionWithCategory } from "@/lib/types/database";
+import type { RecurringTransactionWithCategory, TransactionWithCategory } from "@/lib/types/database";
 
 const CATEGORY_FALLBACK_COLOR = "#6b6b8a";
 const MONTHS_IN_TREND = 6;
@@ -58,18 +62,54 @@ export default async function DashboardPage({
   const { start: trendStartDate } = monthRange(trendStart);
   const { end: trendEndDate } = monthRange(competencia);
 
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("*, category:categories(*)")
-    .gte("date", trendStartDate)
-    .lt("date", trendEndDate)
-    .order("date", { ascending: true });
+  const [{ data, error }, { data: recurringData }] = await Promise.all([
+    supabase
+      .from("transactions")
+      .select("*, category:categories(*)")
+      .gte("date", trendStartDate)
+      .lt("date", trendEndDate)
+      .order("date", { ascending: true }),
+    supabase
+      .from("recurring_transactions")
+      .select("*, category:categories(*)")
+      .eq("active", true),
+  ]);
 
   const transactions = (data ?? []) as TransactionWithCategory[];
   const { start: monthStart, end: monthEnd } = monthRange(competencia);
   const monthTransactions = transactions.filter(
     (t) => t.date >= monthStart && t.date < monthEnd
   );
+
+  const recurring = (recurringData ?? []) as RecurringTransactionWithCategory[];
+  const recurringReminders: RecurringReminder[] = [];
+  for (const r of recurring) {
+    const matched = monthTransactions.find((t) => t.recurring_id === r.id);
+    if (matched) {
+      recurringReminders.push({
+        id: r.id,
+        description: matched.description || r.description,
+        categoryName: r.category?.name ?? null,
+        categoryColor: r.category?.color ?? null,
+        amount: matched.amount,
+        type: matched.type,
+        date: matched.date,
+        status: "pago",
+      });
+    } else if (r.next_date >= monthStart && r.next_date < monthEnd) {
+      recurringReminders.push({
+        id: r.id,
+        description: r.description,
+        categoryName: r.category?.name ?? null,
+        categoryColor: r.category?.color ?? null,
+        amount: r.amount,
+        type: r.type,
+        date: r.next_date,
+        status: "pendente",
+      });
+    }
+  }
+  recurringReminders.sort((a, b) => a.date.localeCompare(b.date));
 
   const totalIncome = monthTransactions
     .filter((t) => t.type === "income")
@@ -215,6 +255,8 @@ export default async function DashboardPage({
           icon={TrendingDown}
         />
       </div>
+
+      <RecurringReminders items={recurringReminders} />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.35)] p-5">
