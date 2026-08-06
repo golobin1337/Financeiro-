@@ -135,19 +135,7 @@ export default async function DashboardPage({
       });
     }
   }
-  const sortedSlices = [...expenseByCategory.values()].sort((a, b) => b.value - a.value);
-  const donutData =
-    sortedSlices.length > 6
-      ? [
-          ...sortedSlices.slice(0, 5),
-          {
-            id: "outras",
-            name: "Outras",
-            color: CATEGORY_FALLBACK_COLOR,
-            value: sortedSlices.slice(5).reduce((sum, s) => sum + s.value, 0),
-          },
-        ]
-      : sortedSlices;
+  const donutData = [...expenseByCategory.values()].sort((a, b) => b.value - a.value);
 
   const monthlyTotals = new Map<string, MonthlyTotals>();
   for (let i = 0; i < MONTHS_IN_TREND; i++) {
