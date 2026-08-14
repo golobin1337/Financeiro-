@@ -246,8 +246,8 @@ export default async function DashboardPage({
 
       <RecurringReminders items={recurringReminders} />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.35)] p-5">
+      <div className="grid items-start gap-4 lg:grid-cols-2">
+        <div className="self-start rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.35)] p-5">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold">
             <PieChartIcon size={16} className="text-primary" />
             Gastos por categoria
@@ -255,7 +255,7 @@ export default async function DashboardPage({
           <ExpenseDonutChart data={donutData} />
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.35)] p-5">
+        <div className="self-start rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.35)] p-5">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold">
             <BarChart3 size={16} className="text-primary" />
             Receitas vs. despesas

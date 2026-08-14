@@ -43,16 +43,16 @@ export function ExpenseDonutChart({ data }: { data: DonutSlice[] }) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-5">
-      <div className="h-48 w-48 shrink-0">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+      <div className="mx-auto h-56 w-56 shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
               dataKey="value"
               nameKey="name"
-              innerRadius={54}
-              outerRadius={78}
+              innerRadius={62}
+              outerRadius={90}
               paddingAngle={data.length > 1 ? 2 : 0}
               stroke={chartTheme.surface}
               strokeWidth={2}
@@ -66,7 +66,7 @@ export function ExpenseDonutChart({ data }: { data: DonutSlice[] }) {
         </ResponsiveContainer>
       </div>
 
-      <ul className="grid w-full grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
+      <ul className="flex flex-1 min-w-0 flex-col gap-2">
         {data.map((slice) => (
           <li key={slice.id} className="flex items-center gap-2 text-sm">
             <span
