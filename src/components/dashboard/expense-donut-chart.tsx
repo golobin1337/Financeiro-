@@ -66,7 +66,7 @@ export function ExpenseDonutChart({ data }: { data: DonutSlice[] }) {
         </ResponsiveContainer>
       </div>
 
-      <ul className="flex flex-1 flex-col gap-2">
+      <ul className="flex max-h-56 flex-1 flex-col gap-2 overflow-y-auto pr-1">
         {data.map((slice) => (
           <li key={slice.id} className="flex items-center gap-2 text-sm">
             <span
