@@ -267,7 +267,7 @@ export default async function DashboardPage({
           hint={
             adsRoi === null
               ? "Sem gastos com anúncios no mês"
-              : `${formatCurrency(adsRoi)} de receita por R$ 1 em anúncios`
+              : `Só com Anúncios o ROI seria ${formatMultiplier(adsRoi)}`
           }
         />
       </div>
