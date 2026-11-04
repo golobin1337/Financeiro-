@@ -105,7 +105,7 @@ export function RecurringForm({
         <AutoResizeTextarea
           id="description"
           name="description"
-          maxLength={200}
+          maxLength={400}
           defaultValue={recurring?.description}
           placeholder="Ex: Assinatura streaming"
           className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"

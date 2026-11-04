@@ -12,6 +12,8 @@ export interface DonutSlice {
   value: number;
 }
 
+const MIN_SHARE_FOR_BORDER = 0.01;
+
 function CustomTooltip({
   active,
   payload,
@@ -53,12 +55,15 @@ export function ExpenseDonutChart({ data }: { data: DonutSlice[] }) {
               nameKey="name"
               innerRadius={62}
               outerRadius={90}
-              paddingAngle={data.length > 1 ? 2 : 0}
-              stroke={chartTheme.surface}
               strokeWidth={2}
             >
               {data.map((slice) => (
-                <Cell key={slice.id} fill={slice.color} />
+                <Cell
+                  key={slice.id}
+                  fill={slice.color}
+                  // Em fatias muito finas, a borda cobriria a cor e deixaria um buraco no anel.
+                  stroke={slice.value / total < MIN_SHARE_FOR_BORDER ? "none" : chartTheme.surface}
+                />
               ))}
             </Pie>
             <Tooltip content={<CustomTooltip />} />

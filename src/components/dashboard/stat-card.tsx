@@ -5,11 +5,13 @@ export function StatCard({
   value,
   tone = "neutral",
   icon: Icon,
+  hint,
 }: {
   label: string;
   value: string;
   tone?: "neutral" | "success" | "danger";
   icon: LucideIcon;
+  hint?: string;
 }) {
   const toneClass =
     tone === "success" ? "text-success" : tone === "danger" ? "text-danger" : "text-foreground";
@@ -29,6 +31,7 @@ export function StatCard({
         </span>
       </div>
       <p className={`mt-3 text-3xl font-semibold tracking-tight ${toneClass}`}>{value}</p>
+      {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
     </div>
   );
 }

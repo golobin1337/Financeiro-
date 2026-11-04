@@ -5,6 +5,14 @@ export function formatCurrency(value: number): string {
   }).format(value);
 }
 
+export function formatPercent(ratio: number): string {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "percent",
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(ratio);
+}
+
 export function formatDate(value: string | Date): string {
   const date = typeof value === "string" ? new Date(`${value}T00:00:00`) : value;
   return new Intl.DateTimeFormat("pt-BR").format(date);

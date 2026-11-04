@@ -3,6 +3,7 @@ import {
   BarChart3,
   PieChart as PieChartIcon,
   LineChart as LineChartIcon,
+  Percent,
   TrendingDown,
   TrendingUp,
   Wallet,
@@ -20,7 +21,7 @@ import {
   RecurringReminders,
   type RecurringReminder,
 } from "@/components/dashboard/recurring-reminders";
-import { currentCompetencia, formatCurrency, monthShortLabel } from "@/lib/format";
+import { currentCompetencia, formatCurrency, formatPercent, monthShortLabel } from "@/lib/format";
 import type { RecurringTransactionWithCategory, TransactionWithCategory } from "@/lib/types/database";
 
 const CATEGORY_FALLBACK_COLOR = "#6b6b8a";
@@ -118,6 +119,8 @@ export default async function DashboardPage({
     .filter((t) => t.type === "expense")
     .reduce((sum, t) => sum + t.amount, 0);
   const saldo = totalIncome - totalExpense;
+  // Sem despesas não há investimento sobre o qual calcular o retorno.
+  const roi = totalExpense > 0 ? saldo / totalExpense : null;
 
   const expenseByCategory = new Map<string, DonutSlice>();
   for (const t of monthTransactions) {
@@ -228,7 +231,7 @@ export default async function DashboardPage({
         </p>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Saldo do mês" value={formatCurrency(saldo)} icon={Wallet} />
         <StatCard
           label="Receitas"
@@ -241,6 +244,17 @@ export default async function DashboardPage({
           value={formatCurrency(totalExpense)}
           tone="danger"
           icon={TrendingDown}
+        />
+        <StatCard
+          label="ROI do mês"
+          value={roi === null ? "—" : formatPercent(roi)}
+          tone={roi === null ? "neutral" : roi < 0 ? "danger" : "success"}
+          icon={Percent}
+          hint={
+            roi === null
+              ? "Sem despesas no mês"
+              : `${formatCurrency(totalIncome / totalExpense)} de receita por R$ 1 gasto`
+          }
         />
       </div>
 

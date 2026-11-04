@@ -9,7 +9,11 @@ const transactionSchema = z.object({
   amount: z.coerce.number().positive("Informe um valor maior que zero."),
   type: z.enum(["income", "expense"]),
   category_id: z.string().uuid().nullable(),
-  description: z.string().trim().max(200).default(""),
+  description: z
+    .string()
+    .trim()
+    .max(400, "A descrição pode ter no máximo 400 caracteres.")
+    .default(""),
   date: z.string().min(1, "Informe a data."),
 });
 
@@ -23,7 +27,8 @@ function parseTransaction(formData: FormData) {
     amount: formData.get("amount"),
     type: formData.get("type"),
     category_id: categoryId ? categoryId : null,
-    description: formData.get("description") ?? "",
+    // O navegador envia quebras de linha como \r\n, mas o maxLength do campo as conta como 1 caractere.
+    description: String(formData.get("description") ?? "").replace(/\r\n/g, "\n"),
     date: formData.get("date"),
   });
 }
