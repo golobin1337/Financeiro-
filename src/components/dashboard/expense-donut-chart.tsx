@@ -46,7 +46,7 @@ export function ExpenseDonutChart({ data }: { data: DonutSlice[] }) {
 
   return (
     <div className="flex h-full min-h-56 flex-col gap-4 sm:flex-row sm:items-stretch">
-      <div className="mx-auto h-56 w-56 shrink-0">
+      <div className="mx-auto h-56 w-56 shrink-0 sm:mx-0 sm:w-48">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -71,18 +71,18 @@ export function ExpenseDonutChart({ data }: { data: DonutSlice[] }) {
         </ResponsiveContainer>
       </div>
 
-      <ul className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
+      <ul className="grid min-h-0 min-w-0 flex-1 grid-cols-[auto_minmax(0,1fr)_auto_auto] content-start items-center gap-2 overflow-x-hidden overflow-y-auto pr-1 text-sm">
         {data.map((slice) => (
-          <li key={slice.id} className="flex shrink-0 items-center gap-2 text-sm">
+          <li key={slice.id} className="contents">
             <span
-              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              className="h-2.5 w-2.5 rounded-full"
               style={{ backgroundColor: slice.color }}
             />
-            <span className="flex-1 truncate">{slice.name}</span>
-            <span className="text-muted">
+            <span className="truncate">{slice.name}</span>
+            <span className="text-right text-muted">
               {total > 0 ? Math.round((slice.value / total) * 100) : 0}%
             </span>
-            <span className="w-20 text-right font-medium">
+            <span className="whitespace-nowrap text-right font-medium">
               {formatCurrency(slice.value)}
             </span>
           </li>

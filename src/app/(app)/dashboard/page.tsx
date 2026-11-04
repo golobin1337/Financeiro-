@@ -21,11 +21,20 @@ import {
   RecurringReminders,
   type RecurringReminder,
 } from "@/components/dashboard/recurring-reminders";
-import { currentCompetencia, formatCurrency, formatPercent, monthShortLabel } from "@/lib/format";
+import { currentCompetencia, formatCurrency, formatMultiplier, monthShortLabel } from "@/lib/format";
 import type { RecurringTransactionWithCategory, TransactionWithCategory } from "@/lib/types/database";
 
 const CATEGORY_FALLBACK_COLOR = "#6b6b8a";
 const MONTHS_IN_TREND = 6;
+const ADS_CATEGORY_NAME = "anuncios";
+
+function normalizeCategoryName(name: string) {
+  return name
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .trim()
+    .toLowerCase();
+}
 
 function monthRange(competencia: string) {
   const [year, month] = competencia.split("-").map(Number);
@@ -120,7 +129,7 @@ export default async function DashboardPage({
     .reduce((sum, t) => sum + t.amount, 0);
   const saldo = totalIncome - totalExpense;
   // Sem despesas não há investimento sobre o qual calcular o retorno.
-  const roi = totalExpense > 0 ? saldo / totalExpense : null;
+  const roi = totalExpense > 0 ? totalIncome / totalExpense : null;
 
   const expenseByCategory = new Map<string, DonutSlice>();
   for (const t of monthTransactions) {
@@ -139,6 +148,11 @@ export default async function DashboardPage({
     }
   }
   const donutData = [...expenseByCategory.values()].sort((a, b) => b.value - a.value);
+
+  const adsExpense = donutData
+    .filter((slice) => normalizeCategoryName(slice.name) === ADS_CATEGORY_NAME)
+    .reduce((sum, slice) => sum + slice.value, 0);
+  const adsRoi = adsExpense > 0 ? totalIncome / adsExpense : null;
 
   const monthlyTotals = new Map<string, MonthlyTotals>();
   for (let i = 0; i < MONTHS_IN_TREND; i++) {
@@ -247,13 +261,13 @@ export default async function DashboardPage({
         />
         <StatCard
           label="ROI do mês"
-          value={roi === null ? "—" : formatPercent(roi)}
-          tone={roi === null ? "neutral" : roi < 0 ? "danger" : "success"}
+          value={roi === null ? "—" : formatMultiplier(roi)}
+          tone={roi === null ? "neutral" : roi < 1 ? "danger" : "success"}
           icon={Percent}
           hint={
-            roi === null
-              ? "Sem despesas no mês"
-              : `${formatCurrency(totalIncome / totalExpense)} de receita por R$ 1 gasto`
+            adsRoi === null
+              ? "Sem gastos com anúncios no mês"
+              : `${formatCurrency(adsRoi)} de receita por R$ 1 em anúncios`
           }
         />
       </div>

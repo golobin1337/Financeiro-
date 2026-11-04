@@ -5,12 +5,10 @@ export function formatCurrency(value: number): string {
   }).format(value);
 }
 
-export function formatPercent(ratio: number): string {
+export function formatMultiplier(value: number): string {
   return new Intl.NumberFormat("pt-BR", {
-    style: "percent",
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  }).format(ratio);
+    maximumFractionDigits: 2,
+  }).format(value);
 }
 
 export function formatDate(value: string | Date): string {
