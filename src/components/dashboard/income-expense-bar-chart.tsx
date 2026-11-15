@@ -58,7 +58,7 @@ export function IncomeExpenseBarChart({ data }: { data: MonthlyTotals[] }) {
   }
 
   return (
-    <div className="h-72 w-full">
+    <div className="h-full w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} barGap={2} barCategoryGap="24%">
           <CartesianGrid

@@ -1,31 +1,17 @@
-import Link from "next/link";
-import {
-  BarChart3,
-  PieChart as PieChartIcon,
-  LineChart as LineChartIcon,
-  Percent,
-  TrendingDown,
-  TrendingUp,
-  Wallet,
-} from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/supabase/get-user";
-import { StatCard } from "@/components/dashboard/stat-card";
-import { ExpenseDonutChart, type DonutSlice } from "@/components/dashboard/expense-donut-chart";
-import {
-  IncomeExpenseBarChart,
-  type MonthlyTotals,
-} from "@/components/dashboard/income-expense-bar-chart";
-import { DailyFlowChart, type DailyTotals } from "@/components/dashboard/daily-flow-chart";
-import {
-  RecurringReminders,
-  type RecurringReminder,
-} from "@/components/dashboard/recurring-reminders";
-import { currentCompetencia, formatCurrency, formatMultiplier, monthShortLabel } from "@/lib/format";
+import { DashboardView } from "@/components/dashboard/dashboard-view";
+import type { DonutSlice } from "@/components/dashboard/expense-donut-chart";
+import type { MonthlyTotals } from "@/components/dashboard/income-expense-bar-chart";
+import type { DailyTotals } from "@/components/dashboard/daily-flow-chart";
+import type { RecurringReminder } from "@/components/dashboard/recurring-reminders";
+import type { RecentTransaction } from "@/components/dashboard/recent-transactions";
+import { currentCompetencia, monthShortLabel } from "@/lib/format";
 import type { RecurringTransactionWithCategory, TransactionWithCategory } from "@/lib/types/database";
 
 const CATEGORY_FALLBACK_COLOR = "#6b6b8a";
 const MONTHS_IN_TREND = 6;
+const RECENT_TRANSACTIONS_LIMIT = 6;
 const ADS_CATEGORY_NAME = "anuncios";
 
 function normalizeCategoryName(name: string) {
@@ -52,6 +38,10 @@ function shiftCompetencia(competencia: string, offset: number) {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
+function percentChange(current: number, previous: number | undefined) {
+  return previous ? (current - previous) / previous : null;
+}
+
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -59,6 +49,8 @@ export default async function DashboardPage({
 }) {
   const params = await searchParams;
   const competencia = params.competencia ?? currentCompetencia();
+  const previousCompetencia = shiftCompetencia(competencia, -1);
+  const nextCompetencia = shiftCompetencia(competencia, 1);
 
   const supabase = await createClient();
   const user = await getCurrentUser();
@@ -167,6 +159,7 @@ export default async function DashboardPage({
     else bucket.expense += t.amount;
   }
   const barData = [...monthlyTotals.values()];
+  const previousTotals = monthlyTotals.get(previousCompetencia);
 
   const [competenciaYear, competenciaMonth] = competencia.split("-").map(Number);
   const daysInMonth = new Date(Date.UTC(competenciaYear, competenciaMonth, 0)).getUTCDate();
@@ -183,124 +176,38 @@ export default async function DashboardPage({
   }
   const dailyData = [...dailyTotals.values()];
 
-  const previousCompetencia = shiftCompetencia(competencia, -1);
-  const nextCompetencia = shiftCompetencia(competencia, 1);
+  const recentTransactions: RecentTransaction[] = [...monthTransactions]
+    .sort((a, b) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at))
+    .slice(0, RECENT_TRANSACTIONS_LIMIT)
+    .map((t) => ({
+      id: t.id,
+      description: t.description,
+      categoryName: t.category?.name ?? null,
+      categoryColor: t.category?.color ?? null,
+      type: t.type,
+      amount: t.amount,
+      date: t.date,
+    }));
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Olá{firstName ? `, ${firstName}` : ""}!
-          </h1>
-          <p className="text-muted">Resumo financeiro do mês</p>
-        </div>
-
-        <form method="get" className="flex items-end gap-2">
-          <div className="flex flex-col gap-1">
-            <label htmlFor="competencia" className="text-sm text-muted">
-              Competência
-            </label>
-            <input
-              id="competencia"
-              name="competencia"
-              type="month"
-              defaultValue={competencia}
-              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary"
-            />
-          </div>
-          <button
-            type="submit"
-            className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-surface-hover"
-          >
-            Carregar
-          </button>
-          <Link
-            href="/transacao/nova"
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
-          >
-            + Transação
-          </Link>
-        </form>
-      </div>
-
-      <div className="flex items-center gap-2 text-sm text-muted">
-        <Link
-          href={`/dashboard?competencia=${previousCompetencia}`}
-          className="rounded-md px-2 py-1 hover:bg-surface-hover hover:text-foreground"
-        >
-          ← mês anterior
-        </Link>
-        <Link
-          href={`/dashboard?competencia=${nextCompetencia}`}
-          className="rounded-md px-2 py-1 hover:bg-surface-hover hover:text-foreground"
-        >
-          próximo mês →
-        </Link>
-      </div>
-
-      {error && (
-        <p className="rounded-lg border border-danger/30 bg-danger-bg px-4 py-3 text-sm text-danger">
-          Não foi possível ligar ao servidor. Verifique a ligação ou tente mais tarde.
-        </p>
-      )}
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Saldo do mês" value={formatCurrency(saldo)} icon={Wallet} />
-        <StatCard
-          label="Receitas"
-          value={formatCurrency(totalIncome)}
-          tone="success"
-          icon={TrendingUp}
-        />
-        <StatCard
-          label="Despesas"
-          value={formatCurrency(totalExpense)}
-          tone="danger"
-          icon={TrendingDown}
-        />
-        <StatCard
-          label="ROI do mês"
-          value={roi === null ? "—" : formatMultiplier(roi)}
-          tone={roi === null ? "neutral" : roi < 1 ? "danger" : "success"}
-          icon={Percent}
-          hint={
-            adsRoi === null
-              ? "Sem gastos com anúncios no mês"
-              : `Só com Anúncios o ROI seria ${formatMultiplier(adsRoi)}`
-          }
-        />
-      </div>
-
-      <RecurringReminders items={recurringReminders} />
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="flex flex-col rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.35)] p-5">
-          <h2 className="mb-4 flex shrink-0 items-center gap-2 text-sm font-semibold">
-            <PieChartIcon size={16} className="text-primary" />
-            Gastos por categoria
-          </h2>
-          <div className="min-h-0 flex-1">
-            <ExpenseDonutChart data={donutData} />
-          </div>
-        </div>
-
-        <div className="flex flex-col rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.35)] p-5">
-          <h2 className="mb-4 flex shrink-0 items-center gap-2 text-sm font-semibold">
-            <BarChart3 size={16} className="text-primary" />
-            Receitas vs. despesas
-          </h2>
-          <IncomeExpenseBarChart data={barData} />
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.35)] p-5">
-        <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold">
-          <LineChartIcon size={16} className="text-primary" />
-          Gasto e faturamento por dia
-        </h2>
-        <DailyFlowChart data={dailyData} />
-      </div>
-    </div>
+    <DashboardView
+      firstName={firstName}
+      competencia={competencia}
+      previousCompetencia={previousCompetencia}
+      nextCompetencia={nextCompetencia}
+      loadError={Boolean(error)}
+      totalIncome={totalIncome}
+      totalExpense={totalExpense}
+      saldo={saldo}
+      incomeChange={percentChange(totalIncome, previousTotals?.income)}
+      expenseChange={percentChange(totalExpense, previousTotals?.expense)}
+      roi={roi}
+      adsRoi={adsRoi}
+      donutData={donutData}
+      barData={barData}
+      dailyData={dailyData}
+      recentTransactions={recentTransactions}
+      recurringReminders={recurringReminders}
+    />
   );
 }

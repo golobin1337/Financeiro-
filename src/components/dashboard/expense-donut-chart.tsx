@@ -45,49 +45,51 @@ export function ExpenseDonutChart({ data }: { data: DonutSlice[] }) {
   }
 
   return (
-    <div className="flex h-full min-h-56 flex-col gap-4 sm:flex-row sm:items-stretch">
-      <div className="mx-auto h-56 w-56 shrink-0 sm:mx-0 sm:w-48">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              dataKey="value"
-              nameKey="name"
-              innerRadius={62}
-              outerRadius={90}
-              strokeWidth={2}
-            >
-              {data.map((slice) => (
-                <Cell
-                  key={slice.id}
-                  fill={slice.color}
-                  // Em fatias muito finas, a borda cobriria a cor e deixaria um buraco no anel.
-                  stroke={slice.value / total < MIN_SHARE_FOR_BORDER ? "none" : chartTheme.surface}
-                />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-          </PieChart>
-        </ResponsiveContainer>
+    <div className="@container h-full">
+      <div className="flex h-full min-h-56 flex-col gap-4 @lg:flex-row @lg:items-stretch">
+        <div className="mx-auto h-56 w-56 shrink-0 @lg:mx-0 @lg:w-48">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                dataKey="value"
+                nameKey="name"
+                innerRadius={62}
+                outerRadius={90}
+                strokeWidth={2}
+              >
+                {data.map((slice) => (
+                  <Cell
+                    key={slice.id}
+                    fill={slice.color}
+                    // Em fatias muito finas, a borda cobriria a cor e deixaria um buraco no anel.
+                    stroke={slice.value / total < MIN_SHARE_FOR_BORDER ? "none" : chartTheme.surface}
+                  />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomTooltip />} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+  
+        <ul className="grid min-h-0 min-w-0 flex-1 grid-cols-[auto_minmax(0,1fr)_auto_auto] content-start items-center gap-2 overflow-x-hidden overflow-y-auto pr-1 text-sm">
+          {data.map((slice) => (
+            <li key={slice.id} className="contents">
+              <span
+                className="h-2.5 w-2.5 rounded-full"
+                style={{ backgroundColor: slice.color }}
+              />
+              <span className="truncate">{slice.name}</span>
+              <span className="text-right text-muted">
+                {total > 0 ? Math.round((slice.value / total) * 100) : 0}%
+              </span>
+              <span className="whitespace-nowrap text-right font-medium">
+                {formatCurrency(slice.value)}
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
-
-      <ul className="grid min-h-0 min-w-0 flex-1 grid-cols-[auto_minmax(0,1fr)_auto_auto] content-start items-center gap-2 overflow-x-hidden overflow-y-auto pr-1 text-sm">
-        {data.map((slice) => (
-          <li key={slice.id} className="contents">
-            <span
-              className="h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: slice.color }}
-            />
-            <span className="truncate">{slice.name}</span>
-            <span className="text-right text-muted">
-              {total > 0 ? Math.round((slice.value / total) * 100) : 0}%
-            </span>
-            <span className="whitespace-nowrap text-right font-medium">
-              {formatCurrency(slice.value)}
-            </span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
