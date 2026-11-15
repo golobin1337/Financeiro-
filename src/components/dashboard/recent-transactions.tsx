@@ -58,7 +58,7 @@ export function RecentTransactions({
             <tbody>
               {items.map((t) => {
                 const income = t.type === "income";
-                const Arrow = income ? ArrowDownLeft : ArrowUpRight;
+                const Arrow = income ? ArrowUpRight : ArrowDownLeft;
                 return (
                   <tr
                     key={t.id}
