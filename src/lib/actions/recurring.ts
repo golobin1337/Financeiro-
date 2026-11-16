@@ -4,7 +4,13 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import type { RecurringFrequency } from "@/lib/types/database";
+import type { RecurringTransaction } from "@/lib/types/database";
+import { todayInBrazil } from "@/lib/dates";
+import {
+  advanceRecurringDate,
+  postRecurringOccurrence,
+  recurringAnchorDay,
+} from "@/lib/recurring/materialize";
 
 const recurringSchema = z.object({
   amount: z.coerce.number().positive("Informe um valor maior que zero."),
@@ -107,60 +113,30 @@ export async function toggleRecurringActive(formData: FormData) {
   revalidatePath("/recorrencias");
 }
 
-function advance(date: string, frequency: RecurringFrequency): string {
-  const [year, month, day] = date.split("-").map(Number);
-  const d = new Date(Date.UTC(year, month - 1, day));
-  if (frequency === "weekly") d.setUTCDate(d.getUTCDate() + 7);
-  else if (frequency === "monthly") d.setUTCMonth(d.getUTCMonth() + 1);
-  else d.setUTCFullYear(d.getUTCFullYear() + 1);
-  return d.toISOString().slice(0, 10);
-}
+/** Marca a próxima ocorrência como paga hoje e avança a recorrência para a data seguinte. */
+export async function markRecurringPaid(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
 
-const MAX_CATCHUP_ITERATIONS = 36;
-
-export async function materializeDueRecurring() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return;
+  const { data } = await supabase.from("recurring_transactions").select("*").eq("id", id).single();
+  const recurring = data as RecurringTransaction | null;
+  if (!recurring) return;
 
-  const today = new Date().toISOString().slice(0, 10);
+  if (!(await postRecurringOccurrence(supabase, recurring, todayInBrazil()))) return;
 
-  const { data: due } = await supabase
+  await supabase
     .from("recurring_transactions")
-    .select("*")
-    .eq("user_id", user.id)
-    .eq("active", true)
-    .lte("next_date", today);
+    .update({
+      next_date: advanceRecurringDate(
+        recurring.next_date,
+        recurring.frequency,
+        recurringAnchorDay(recurring)
+      ),
+    })
+    .eq("id", id);
 
-  if (!due || due.length === 0) return;
-
-  for (const recurring of due) {
-    const newTransactions: { user_id: string; category_id: string | null; recurring_id: string; amount: number; type: string; description: string; date: string }[] = [];
-    let cursor = recurring.next_date as string;
-    let iterations = 0;
-
-    while (cursor <= today && iterations < MAX_CATCHUP_ITERATIONS) {
-      newTransactions.push({
-        user_id: user.id,
-        category_id: recurring.category_id,
-        recurring_id: recurring.id,
-        amount: recurring.amount,
-        type: recurring.type,
-        description: recurring.description,
-        date: cursor,
-      });
-      cursor = advance(cursor, recurring.frequency as RecurringFrequency);
-      iterations++;
-    }
-
-    if (newTransactions.length > 0) {
-      await supabase.from("transactions").insert(newTransactions);
-      await supabase
-        .from("recurring_transactions")
-        .update({ next_date: cursor })
-        .eq("id", recurring.id);
-    }
-  }
+  revalidatePath("/dashboard");
+  revalidatePath("/recorrencias");
+  revalidatePath("/historico");
 }

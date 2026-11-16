@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { getCurrentUser } from "@/lib/supabase/get-user";
 import { Sidebar } from "@/components/sidebar";
-import { materializeDueRecurring } from "@/lib/actions/recurring";
+import { createClient } from "@/lib/supabase/server";
+import { materializeDueRecurring } from "@/lib/recurring/materialize";
 
 export default async function AppLayout({
   children,
@@ -15,7 +16,9 @@ export default async function AppLayout({
     redirect("/login");
   }
 
-  after(() => materializeDueRecurring());
+  // O cliente é criado aqui porque, dentro de after() em layouts, ler cookies dá erro.
+  const supabase = await createClient();
+  after(() => materializeDueRecurring(supabase, user.id));
 
   const userLabel =
     (user.user_metadata?.name as string | undefined) ??

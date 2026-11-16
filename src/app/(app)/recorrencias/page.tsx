@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Check, Pencil, Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { deleteRecurring, toggleRecurringActive } from "@/lib/actions/recurring";
+import { deleteRecurring, markRecurringPaid, toggleRecurringActive } from "@/lib/actions/recurring";
 import { formatCurrency, formatDate } from "@/lib/format";
 import type { RecurringTransactionWithCategory } from "@/lib/types/database";
 
@@ -67,6 +67,20 @@ export default async function RecorrenciasPage() {
             >
               {r.type === "income" ? "+" : "-"} {formatCurrency(r.amount)}
             </span>
+
+            {r.active && (
+              <form action={markRecurringPaid}>
+                <input type="hidden" name="id" value={r.id} />
+                <button
+                  type="submit"
+                  title={`Lança a ocorrência de ${formatDate(r.next_date)} com a data de hoje`}
+                  className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition hover:border-success/50 hover:bg-success/10 hover:text-success"
+                >
+                  <Check size={12} />
+                  {r.type === "income" ? "Marcar recebido" : "Marcar pago"}
+                </button>
+              </form>
+            )}
 
             <form action={toggleRecurringActive}>
               <input type="hidden" name="id" value={r.id} />
