@@ -4,7 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/format";
 
-function ChangeBadge({
+export function ChangeBadge({
   change,
   goodWhenUp,
   previousLabel,

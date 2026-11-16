@@ -3,12 +3,11 @@ import {
   BarChart3,
   ChevronLeft,
   ChevronRight,
-  LineChart as LineChartIcon,
   PieChart as PieChartIcon,
 } from "lucide-react";
 import { Card, CardHeader, CardPill } from "@/components/ui/card";
 import { BalanceHeroCard } from "@/components/dashboard/balance-hero-card";
-import { MonthSummaryCard } from "@/components/dashboard/month-summary-card";
+import { ChangeBadge, MonthSummaryCard } from "@/components/dashboard/month-summary-card";
 import { RoiCard } from "@/components/dashboard/roi-card";
 import {
   RecentTransactions,
@@ -24,7 +23,7 @@ import {
   RecurringReminders,
   type RecurringReminder,
 } from "@/components/dashboard/recurring-reminders";
-import { monthLabel, monthShortLabel } from "@/lib/format";
+import { formatCurrency, monthLabel, monthShortLabel } from "@/lib/format";
 
 export interface DashboardViewProps {
   firstName: string;
@@ -175,7 +174,20 @@ export function DashboardView(props: DashboardViewProps) {
       </div>
 
       <Card>
-        <CardHeader icon={LineChartIcon} title="Gasto e faturamento por dia" />
+        <CardHeader icon={BarChart3} title="Gasto e faturamento por dia" />
+        <div className="mb-4">
+          <p className="text-xs text-muted">Faturamento no mês</p>
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            <p className="text-2xl font-semibold tracking-tight">
+              {formatCurrency(props.totalIncome)}
+            </p>
+            <ChangeBadge
+              change={props.incomeChange}
+              goodWhenUp
+              previousLabel={monthShortLabel(previousCompetencia)}
+            />
+          </div>
+        </div>
         <DailyFlowChart data={props.dailyData} />
       </Card>
     </div>

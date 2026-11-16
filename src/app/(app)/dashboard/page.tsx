@@ -7,6 +7,7 @@ import type { DailyTotals } from "@/components/dashboard/daily-flow-chart";
 import type { RecurringReminder } from "@/components/dashboard/recurring-reminders";
 import type { RecentTransaction } from "@/components/dashboard/recent-transactions";
 import { currentCompetencia, monthShortLabel } from "@/lib/format";
+import { todayInBrazil } from "@/lib/dates";
 import type { RecurringTransactionWithCategory, TransactionWithCategory } from "@/lib/types/database";
 
 const CATEGORY_FALLBACK_COLOR = "#6b6b8a";
@@ -163,7 +164,7 @@ export default async function DashboardPage({
 
   const [competenciaYear, competenciaMonth] = competencia.split("-").map(Number);
   const daysInMonth = new Date(Date.UTC(competenciaYear, competenciaMonth, 0)).getUTCDate();
-  const dailyTotals = new Map<string, DailyTotals>();
+  const dailyTotals = new Map<string, { date: string; day: string; income: number; expense: number }>();
   for (let day = 1; day <= daysInMonth; day++) {
     const date = `${competencia}-${String(day).padStart(2, "0")}`;
     dailyTotals.set(date, { date, day: String(day).padStart(2, "0"), income: 0, expense: 0 });
@@ -174,7 +175,13 @@ export default async function DashboardPage({
     if (t.type === "income") bucket.income += t.amount;
     else bucket.expense += t.amount;
   }
-  const dailyData = [...dailyTotals.values()];
+  // Dias que ainda não chegaram ficam vazios no gráfico, em vez de aparecer como R$ 0.
+  const today = todayInBrazil();
+  const dailyData: DailyTotals[] = [...dailyTotals.values()].map((d) =>
+    d.date > today && d.income === 0 && d.expense === 0
+      ? { ...d, income: null, expense: null }
+      : d
+  );
 
   const recentTransactions: RecentTransaction[] = [...monthTransactions]
     .sort((a, b) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at))

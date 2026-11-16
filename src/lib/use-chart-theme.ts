@@ -9,6 +9,8 @@ const LIGHT = {
   muted: "#66667f",
   income: "#2a78d6",
   expense: "#eb6834",
+  primary: "#7c6ef2",
+  barFill: "#ececf6",
 };
 
 const DARK = {
@@ -17,6 +19,8 @@ const DARK = {
   muted: "#9494b8",
   income: "#3987e5",
   expense: "#d95926",
+  primary: "#7c6ef2",
+  barFill: "#20202f",
 };
 
 export function useChartTheme() {
