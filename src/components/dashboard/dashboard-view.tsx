@@ -4,6 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   PieChart as PieChartIcon,
+  TrendingUp,
 } from "lucide-react";
 import { Card, CardHeader, CardPill } from "@/components/ui/card";
 import { BalanceHeroCard } from "@/components/dashboard/balance-hero-card";
@@ -19,6 +20,7 @@ import {
   type MonthlyTotals,
 } from "@/components/dashboard/income-expense-bar-chart";
 import { DailyFlowChart, type DailyTotals } from "@/components/dashboard/daily-flow-chart";
+import { AnnualFlowChart, type AnnualFlow } from "@/components/dashboard/annual-flow-chart";
 import {
   RecurringReminders,
   type RecurringReminder,
@@ -41,6 +43,10 @@ export interface DashboardViewProps {
   donutData: DonutSlice[];
   barData: MonthlyTotals[];
   dailyData: DailyTotals[];
+  annualData: AnnualFlow[];
+  annualYear: string;
+  annualIncomeTotal: number;
+  annualExpenseTotal: number;
   recentTransactions: RecentTransaction[];
   recurringReminders: RecurringReminder[];
 }
@@ -189,6 +195,35 @@ export function DashboardView(props: DashboardViewProps) {
           </div>
         </div>
         <DailyFlowChart data={props.dailyData} />
+      </Card>
+
+      <Card>
+        <CardHeader
+          icon={TrendingUp}
+          title="Faturamento x gasto no ano"
+          action={<CardPill>{props.annualYear}</CardPill>}
+        />
+        <div className="mb-4 flex flex-wrap gap-x-8 gap-y-2">
+          <div>
+            <p className="text-xs text-muted">Faturamento no ano</p>
+            <p className="text-xl font-semibold tracking-tight text-success">
+              {formatCurrency(props.annualIncomeTotal)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted">Gasto no ano</p>
+            <p className="text-xl font-semibold tracking-tight text-danger">
+              {formatCurrency(props.annualExpenseTotal)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted">Saldo no ano</p>
+            <p className="text-xl font-semibold tracking-tight">
+              {formatCurrency(props.annualIncomeTotal - props.annualExpenseTotal)}
+            </p>
+          </div>
+        </div>
+        <AnnualFlowChart data={props.annualData} />
       </Card>
     </div>
   );

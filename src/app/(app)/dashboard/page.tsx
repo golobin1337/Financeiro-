@@ -4,6 +4,7 @@ import { DashboardView } from "@/components/dashboard/dashboard-view";
 import type { DonutSlice } from "@/components/dashboard/expense-donut-chart";
 import type { MonthlyTotals } from "@/components/dashboard/income-expense-bar-chart";
 import type { DailyTotals } from "@/components/dashboard/daily-flow-chart";
+import type { AnnualFlow } from "@/components/dashboard/annual-flow-chart";
 import type { RecurringReminder } from "@/components/dashboard/recurring-reminders";
 import type { RecentTransaction } from "@/components/dashboard/recent-transactions";
 import { currentCompetencia, monthShortLabel } from "@/lib/format";
@@ -65,7 +66,11 @@ export default async function DashboardPage({
   const { start: trendStartDate } = monthRange(trendStart);
   const { end: trendEndDate } = monthRange(competencia);
 
-  const [{ data, error }, { data: recurringData }] = await Promise.all([
+  const [competenciaYear, competenciaMonth] = competencia.split("-").map(Number);
+  const yearStartDate = `${competenciaYear}-01-01`;
+  const yearEndDate = `${competenciaYear + 1}-01-01`;
+
+  const [{ data, error }, { data: recurringData }, { data: yearData }] = await Promise.all([
     supabase
       .from("transactions")
       .select("*, category:categories(*)")
@@ -76,6 +81,12 @@ export default async function DashboardPage({
       .from("recurring_transactions")
       .select("*, category:categories(*)")
       .eq("active", true),
+    // Consulta enxuta (só data, tipo e valor) para o gráfico anual.
+    supabase
+      .from("transactions")
+      .select("date, type, amount")
+      .gte("date", yearStartDate)
+      .lt("date", yearEndDate),
   ]);
 
   const transactions = (data ?? []) as TransactionWithCategory[];
@@ -162,7 +173,6 @@ export default async function DashboardPage({
   const barData = [...monthlyTotals.values()];
   const previousTotals = monthlyTotals.get(previousCompetencia);
 
-  const [competenciaYear, competenciaMonth] = competencia.split("-").map(Number);
   const daysInMonth = new Date(Date.UTC(competenciaYear, competenciaMonth, 0)).getUTCDate();
   const dailyTotals = new Map<string, { date: string; day: string; income: number; expense: number }>();
   for (let day = 1; day <= daysInMonth; day++) {
@@ -179,6 +189,32 @@ export default async function DashboardPage({
   const today = todayInBrazil();
   const dailyData: DailyTotals[] = [...dailyTotals.values()].map((d) =>
     d.date > today && d.income === 0 && d.expense === 0
+      ? { ...d, income: null, expense: null }
+      : d
+  );
+
+  // Gráfico anual: faturamento x gasto em cada mês do ano da competência.
+  const currentYearMonth = today.slice(0, 7);
+  const annualTotals = new Map<string, AnnualFlow>();
+  for (let m = 1; m <= 12; m++) {
+    const key = `${competenciaYear}-${String(m).padStart(2, "0")}`;
+    annualTotals.set(key, { month: key, label: monthShortLabel(key), income: 0, expense: 0 });
+  }
+  for (const t of (yearData ?? []) as { date: string; type: string; amount: number }[]) {
+    const bucket = annualTotals.get(t.date.slice(0, 7));
+    if (!bucket) continue;
+    if (t.type === "income") bucket.income = (bucket.income ?? 0) + t.amount;
+    else bucket.expense = (bucket.expense ?? 0) + t.amount;
+  }
+  let annualIncomeTotal = 0;
+  let annualExpenseTotal = 0;
+  for (const bucket of annualTotals.values()) {
+    annualIncomeTotal += bucket.income ?? 0;
+    annualExpenseTotal += bucket.expense ?? 0;
+  }
+  // Meses que ainda não chegaram ficam vazios, para a área parar no mês atual.
+  const annualData: AnnualFlow[] = [...annualTotals.values()].map((d) =>
+    d.month > currentYearMonth && d.income === 0 && d.expense === 0
       ? { ...d, income: null, expense: null }
       : d
   );
@@ -213,6 +249,10 @@ export default async function DashboardPage({
       donutData={donutData}
       barData={barData}
       dailyData={dailyData}
+      annualData={annualData}
+      annualYear={String(competenciaYear)}
+      annualIncomeTotal={annualIncomeTotal}
+      annualExpenseTotal={annualExpenseTotal}
       recentTransactions={recentTransactions}
       recurringReminders={recurringReminders}
     />
