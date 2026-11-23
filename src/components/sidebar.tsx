@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
+  Check,
   ChevronDown,
   LayoutDashboard,
   List,
@@ -12,11 +13,14 @@ import {
   Plus,
   Repeat,
   Tag,
+  UserPlus,
   Wallet,
   X,
 } from "lucide-react";
 import { signOut } from "@/lib/actions/auth";
+import { startAddAccount, switchAccount } from "@/lib/actions/accounts";
 import { ThemeToggle } from "@/components/theme-toggle";
+import type { AccountRef } from "@/lib/types/account";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -52,11 +56,20 @@ function NewTransactionLink({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export function Sidebar({ userLabel }: { userLabel: string }) {
+export function Sidebar({
+  userLabel,
+  accounts,
+  activeId,
+}: {
+  userLabel: string;
+  accounts: AccountRef[];
+  activeId: string;
+}) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const closeDrawer = () => setDrawerOpen(false);
+  const closeAccount = () => setAccountOpen(false);
 
   return (
     <>
@@ -116,10 +129,62 @@ export function Sidebar({ userLabel }: { userLabel: string }) {
             <>
               <div className="fixed inset-0 z-10" onClick={() => setAccountOpen(false)} />
               <div className="absolute inset-x-0 z-20 mt-2 rounded-lg border border-border bg-surface p-1 shadow-lg">
-                <form action={signOut}>
+                {accounts.length > 1 && (
+                  <p className="px-3 pt-1.5 pb-1 text-xs font-medium tracking-wider text-muted uppercase">
+                    Trocar de conta
+                  </p>
+                )}
+
+                {accounts.map((account) => {
+                  const isActive = account.id === activeId;
+                  const row = (
+                    <span className="flex w-full items-center gap-2.5">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                        {account.name.charAt(0).toUpperCase()}
+                      </span>
+                      <span className="min-w-0 flex-1 text-left">
+                        <span className="block truncate text-sm font-medium">{account.name}</span>
+                        <span className="block truncate text-xs text-muted">{account.email}</span>
+                      </span>
+                      {isActive && <Check size={14} className="shrink-0 text-primary" />}
+                    </span>
+                  );
+
+                  if (isActive) {
+                    return (
+                      <div key={account.id} className="rounded-md bg-surface-hover px-2.5 py-2">
+                        {row}
+                      </div>
+                    );
+                  }
+                  return (
+                    <form key={account.id} action={switchAccount} onSubmit={closeAccount}>
+                      <input type="hidden" name="id" value={account.id} />
+                      <button
+                        type="submit"
+                        className="w-full rounded-md px-2.5 py-2 transition hover:bg-surface-hover"
+                      >
+                        {row}
+                      </button>
+                    </form>
+                  );
+                })}
+
+                <div className="my-1 border-t border-border" />
+
+                <form action={startAddAccount} onSubmit={closeAccount}>
                   <button
                     type="submit"
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-danger hover:bg-surface-hover"
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-muted transition hover:bg-surface-hover hover:text-foreground"
+                  >
+                    <UserPlus size={14} />
+                    Adicionar conta
+                  </button>
+                </form>
+                <form action={signOut} onSubmit={closeAccount}>
+                  <button
+                    type="submit"
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-danger transition hover:bg-surface-hover"
                   >
                     <LogOut size={14} />
                     Sair

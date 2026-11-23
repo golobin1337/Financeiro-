@@ -1,11 +1,25 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { Suspense, useActionState, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { signIn, signUp, type AuthState } from "@/lib/actions/auth";
 
 const initialState: AuthState = { error: null, info: null };
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const isAdding = searchParams.get("add") !== null;
+  const prefillEmail = searchParams.get("email") ?? "";
+
   const [mode, setMode] = useState<"entrar" | "cadastro">("entrar");
   const action = mode === "entrar" ? signIn : signUp;
   const [state, formAction, pending] = useActionState(action, initialState);
@@ -13,6 +27,15 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
+        {isAdding && (
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-primary">
+            <span>Entrando em outra conta. A atual continua salva no menu.</span>
+            <Link href="/dashboard" className="shrink-0 font-medium underline">
+              Cancelar
+            </Link>
+          </div>
+        )}
+
         <div className="mb-8 flex flex-col items-center gap-3">
           <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-xl font-bold text-white shadow-[0_8px_24px_-8px_var(--primary)]">
             L
@@ -74,6 +97,7 @@ export default function LoginPage() {
                 name="email"
                 type="email"
                 required
+                defaultValue={prefillEmail}
                 className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               />
             </div>

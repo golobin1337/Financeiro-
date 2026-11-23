@@ -41,7 +41,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isPublicPath) {
+  // Logado indo ao login vai para o dashboard, exceto ao adicionar outra conta (?add).
+  if (user && isPublicPath && !request.nextUrl.searchParams.has("add")) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
